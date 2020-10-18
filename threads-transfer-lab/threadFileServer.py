@@ -39,6 +39,9 @@ class Server(Thread):
             file = (self.fsock.receive(debug)).decode()
             fileName, fileSize = file.split(":")
             fileSize = int(fileSize)
+            if(fileSize == 0):
+                print("You entered an empty file")
+                sys.exit(1)
             if(os.path.isfile(fileName)):
                 print("file already exists")
                 sys.exit(1)
