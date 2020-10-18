@@ -3,7 +3,7 @@
 import sys
 
 sys.path.append("../lib")  # for params
-import re, socket, params, os
+import re, socket, params, os,threading
 
 switchesVarDefaults = (
     (('-l', '--listenPort'), 'listenPort', 50001),
@@ -26,7 +26,7 @@ lsock.listen(5)
 print("listening on:", bindAddr)
 os.chdir("ServerFiles")
 
-from threading import Thread;
+from threading import Thread
 from encapFramedSock import EncapFramedSock
 
 class Server(Thread):
@@ -39,18 +39,22 @@ class Server(Thread):
             file = (self.fsock.receive(debug)).decode()
             fileName, fileSize = file.split(":")
             fileSize = int(fileSize)
+            if(os.path.isfile("test.txt")):
+                print("file already exists")
+                sys.exit(1)
+            lock = threading.Lock()
+            with lock:
+                with open(fileName, "w+b") as newFile:
+                    count = 0
+                    while count < fileSize:
+                        payload = self.fsock.receive(debug)
+                        data = bytes(payload)
 
-            with open(fileName, "w+b") as newFile:
-                count = 0
-                while count < fileSize:
-                    payload = self.fsock.receive(debug)
-                    data = bytes(payload)
+                        if payload == b'':
+                            break
 
-                    if payload == b'':
-                        break
-
-                    newFile.write(data)
-                    count += 1
+                        newFile.write(data)
+                        count += 1
             newFile.close()
             if debug: print("rec'd: ", payload)
             if payload == b'':
